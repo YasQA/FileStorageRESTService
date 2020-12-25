@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yaslebid.fileStorage.controller.model.File;
+import com.yaslebid.fileStorage.helpers.FileTypeResolver;
 import com.yaslebid.fileStorage.repository.FilesRepository;
 import org.json.JSONArray;
 import org.springframework.data.domain.PageRequest;
@@ -17,13 +18,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
+
 import java.util.*;
 
 @RestController
 @RequestMapping("/")
 public class FileController {
-    private FilesRepository filesRepository;
-    private ElasticsearchOperations elasticsearchOperations;
+    private final FilesRepository filesRepository;
+    private final ElasticsearchOperations elasticsearchOperations;
 
     public FileController(ElasticsearchOperations elasticsearchOperations, FilesRepository filesRepository) {
         this.elasticsearchOperations = elasticsearchOperations;
@@ -34,27 +37,34 @@ public class FileController {
     @RequestMapping(value = "/file", method = RequestMethod.POST)
     public @ResponseBody ResponseEntity<ObjectNode> save(@RequestBody File file) {
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
-        try {
+
             if (!ifFileNameCorrect(file)) {
                 objectNode.put("success", false);
                 objectNode.put("error", "wrong or empty file name");
+                LOGGER.error("wrong or empty file name");
                 return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
             }
 
             if (!ifFileSizeCorrect(file)) {
                 objectNode.put("success", false);
                 objectNode.put("error", "wrong or empty file size, should be not less than 0");
+                LOGGER.error("wrong or empty file size, should be not less than 0");
                 return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
             }
 
+        try {
+            file.addTag(new FileTypeResolver().identifyFileType(file));
             IndexCoordinates indexCoordinates = elasticsearchOperations.getIndexCoordinatesFor(file.getClass());
             IndexQuery indexQuery = new IndexQueryBuilder().withObject(file).build();
             String fileId = elasticsearchOperations.index(indexQuery, indexCoordinates);
             objectNode.put("ID", file.getId());
+            LOGGER.info("file: " + file.getName() + " created successfully");
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
+            LOGGER.error("Failed to create file: " + exception.getMessage());
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
+
         }
     }
 
@@ -75,6 +85,7 @@ public class FileController {
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
+            LOGGER.error("Failed to delete file: " + exception.getMessage());
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
     }
@@ -85,6 +96,7 @@ public class FileController {
         if (filesRepository.findById(id).isPresent()) {
             return filesRepository.findById(id).get();
         } else {
+            LOGGER.error("Failed to get file: Not Found");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
     }
@@ -130,6 +142,7 @@ public class FileController {
         if (filesRepository.findById(id).isEmpty()) {
             objectNode.put("success", false);
             objectNode.put("error", "file not found");
+            LOGGER.error("Failed to add tags to file, file not found");
             return new ResponseEntity<>(objectNode, HttpStatus.NOT_FOUND);
         }
 
@@ -141,6 +154,7 @@ public class FileController {
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
+            LOGGER.error("Failed to add tags to file: " + exception.getMessage());
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
     }
@@ -153,10 +167,12 @@ public class FileController {
         if (filesRepository.findById(id).isEmpty()) {
             objectNode.put("success", false);
             objectNode.put("error", "file not found");
+            LOGGER.error("Failed to delete tags from file, file not found");
             return new ResponseEntity<>(objectNode, HttpStatus.NOT_FOUND);
         } else if (!filesRepository.findById(id).get().getTags().containsAll(Arrays.asList(tags))) {
             objectNode.put("success", false);
             objectNode.put("error", "tag not found on file");
+            LOGGER.error("delete tags from file, tag not found");
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
 
