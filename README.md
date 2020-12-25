@@ -21,6 +21,7 @@ DELETE  /file/{ID}
 
 3. Assign tags to file:
 POST /file/{ID}/tags
+
 ["tag1", "tag2", "tag3"]
 
 4. Remove tags from file
