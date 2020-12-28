@@ -4,7 +4,7 @@ File data Storage RESTService project (to store just file data: file name and si
 Application developed using Java 11, Maven, Spring Boot and Elasticsearch as DataStorage;  
 
 Preconditions to run:
-1.Elasticsearch should be up and running locally(on OS or using docker) on default port 9200;
+1. Elasticsearch should be up and running locally(on OS or using docker) on default port 9200;
 
 How to use:
 
@@ -29,5 +29,5 @@ DELETE /file/{ID}/tags
 
 ["tag1", "tag3"]
 
-5. List files with pagination optionally filtered by tags
-GET /file?tags=tag1,tag2,tag3&page=2&size=3
+5. List files with pagination optionally filtered by tags and quired by name with wildcards
+GET /file?tags=tag1,tag2,tag3&page=2&size=3&q=txt
