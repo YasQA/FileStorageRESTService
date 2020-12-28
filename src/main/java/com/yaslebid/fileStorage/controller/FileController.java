@@ -33,7 +33,7 @@ public class FileController {
         this.filesRepository = filesRepository;
     }
 
-    // POST File data
+    // POST new File data
     @RequestMapping(value = "/file", method = RequestMethod.POST)
     public @ResponseBody ResponseEntity<ObjectNode> save(@RequestBody File file) {
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -60,6 +60,7 @@ public class FileController {
             objectNode.put("ID", file.getId());
             LOGGER.info("file: " + file.getName() + " created successfully");
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
+
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
             LOGGER.error("Failed to create file: " + exception.getMessage());
@@ -101,40 +102,60 @@ public class FileController {
         }
     }
 
-    // List files with pagination optionally filtered by tags
+    // GET files with pagination optionally filtered by tags, also 'q=' applied for file name search with wildcards
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     public ResponseEntity<ObjectNode> findUsingFilter (
                 @RequestParam(required = false) List<String> tags,
+                @RequestParam(required = false) String q,
                 @RequestParam(defaultValue = "0") int page,
                 @RequestParam(defaultValue = "10") int size) {
 
+        long total = 0;
+        ArrayNode arrayNode;
         ObjectMapper mapper = new ObjectMapper();
-        Pageable pageToRespond = PageRequest.of(page, size);
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
+        JSONArray jsArrayTags = new JSONArray(tags);
+        List<File> resultList = new ArrayList<>();
+        Pageable pageToRespond = PageRequest.of(page, size);
 
-        //return ALL files data if tags not provided
-        if (tags == null || tags.size() == 0) {
-            List<File> allFilesList = new ArrayList<>();
-            filesRepository.findAll().forEach(allFilesList::add);
-            ArrayNode array = mapper.valueToTree(allFilesList);
-            objectNode.put("total", allFilesList.size());
-            objectNode.put("page", array);
+        try {
+            if ((tags != null && tags.size() > 0) && (q != null && !q.isEmpty())) {
+                resultList = filesRepository
+                        .findByNameContainingQandTags("*" + q + "*", jsArrayTags, pageToRespond)
+                        .getContent();
+                total = filesRepository
+                        .findByNameContainingQandTags("*" + q + "*", jsArrayTags, pageToRespond)
+                        .getTotalElements();
+                LOGGER.info("Both 'q=' and 'tags=' provided in request path, result total: " + total);
+
+            } else if (tags != null && tags.size() > 0) {
+                resultList = filesRepository.findByFilteredTagQuery(jsArrayTags, pageToRespond).getContent();
+                total = filesRepository.findByFilteredTagQuery(jsArrayTags, pageToRespond).getTotalElements();
+                LOGGER.info("'q=' not provided, returns files with ALL required 'tags=', result total: " + total);
+
+            } else if (q != null && !q.isEmpty()) {
+                resultList = filesRepository.findByNameContainingQ("*" + q + "*", pageToRespond).getContent();
+                total = filesRepository.findByNameContainingQ("*" + q + "*", pageToRespond).getTotalElements();
+                LOGGER.info("'q=' provided, 'tags=' not provided in request path, result total: " + total);
+            } else {
+                filesRepository.findAll().forEach(resultList::add);
+                total = resultList.size();
+                LOGGER.info("'tags=' and 'q=' not provided, list of all files returned, result total: " + total);
+            }
+
+            arrayNode = mapper.valueToTree(resultList);
+            objectNode.put("total", total);
+            objectNode.put("page", arrayNode);
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            objectNode.put("error", "exception: " + exception.getMessage());
+            LOGGER.error("Fails to get list of files according to the request" + exception.getMessage());
+            return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
-
-        //TODO: Only files containing ALL of supplied tags should return
-        // but currently return files containing ANY of tags
-        JSONArray jsArray = new JSONArray(tags);
-        List<File> resultList = filesRepository.findByFilteredTagQuery(jsArray, pageToRespond).getContent();
-        Long total = filesRepository.findByFilteredTagQuery(jsArray, pageToRespond).getTotalElements();
-        ArrayNode array = mapper.valueToTree(resultList);
-        objectNode.put("total", total);
-        objectNode.put("page", array);
-
-        return new ResponseEntity<>(objectNode, HttpStatus.OK);
     }
 
-    // ADD tags to file data
+    // ADD tags to file by ID
     @RequestMapping(value = "/file/{ID}/tags", method = RequestMethod.POST)
     public ResponseEntity<ObjectNode> addTagsToFile(@PathVariable("ID") String id, @RequestBody String[] tags) {
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -151,6 +172,7 @@ public class FileController {
             Arrays.stream(tags).forEach(file::addTag);
             filesRepository.save(file);
             objectNode.put("success", true);
+            LOGGER.info("Tags added to file: " + file.getName());
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
@@ -159,7 +181,7 @@ public class FileController {
         }
     }
 
-    // DELETE tags from file data
+    // DELETE tags from file by ID
     @RequestMapping(value = "/file/{ID}/tags", method = RequestMethod.DELETE)
     public ResponseEntity<ObjectNode> removeTagsFromFile(@PathVariable("ID") String id, @RequestBody String[] tags) {
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -172,7 +194,7 @@ public class FileController {
         } else if (!filesRepository.findById(id).get().getTags().containsAll(Arrays.asList(tags))) {
             objectNode.put("success", false);
             objectNode.put("error", "tag not found on file");
-            LOGGER.error("delete tags from file, tag not found");
+            LOGGER.error("Fails to delete tags from file, tag(-s) not found");
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
 
@@ -181,9 +203,11 @@ public class FileController {
             file.getTags().removeAll(Arrays.asList(tags));
             filesRepository.save(file);
             objectNode.put("success", true);
+            LOGGER.info("File deleted: " + file.getName());
             return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
+            LOGGER.error("Fails to delete tags from file: " + exception.getMessage());
             return new ResponseEntity<>(objectNode, HttpStatus.BAD_REQUEST);
         }
     }
