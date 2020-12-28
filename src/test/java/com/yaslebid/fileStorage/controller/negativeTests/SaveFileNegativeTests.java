@@ -1,4 +1,4 @@
-package com.yaslebid.fileStorage.controller;
+package com.yaslebid.fileStorage.controller.negativeTests;
 
 import com.yaslebid.fileStorage.TestConfigAndData.TestData;
 import org.junit.Assert;
@@ -19,18 +19,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-class FileControllerTest {
+class SaveFileNegativeTests {
+
     @Autowired
     private MockMvc mvc;
-
-    @Test
-    void saveSuccessfully() throws Exception {
-        MvcResult result = this.mvc.perform(post("/file")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(TestData.newFileJson))
-                .andDo(print())
-                .andExpect(status().is2xxSuccessful()).andReturn();
-    }
 
     @Test
     void saveWithEmptyFileName() throws Exception  {
@@ -79,5 +71,4 @@ class FileControllerTest {
         String content = result.getResponse().getContentAsString();
         Assert.assertEquals(TestData.wrongFileSizeResponse, content);
     }
-
 }
