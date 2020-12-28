@@ -2,6 +2,7 @@ package com.yaslebid.fileStorage.TestConfigAndData;
 
 public class TestData {
     public static final String newFileJson = "{\"name\": \"testFile.avi\", \"size\" : 1010101}";
+    public static final String newFileUnknownTypeJson = "{\"name\": \"testFile.tst\", \"size\" : 1010101}";
     public static final String emptyFileNameJson = "{\"name\": \"\", \"size\" : 1010101}";
     public static final String withoutFileNameJson = "{\"size\" : 1010101}";
     public static final String negativeFileSizeJson = "{\"name\": \"testFile.avi\", \"size\" : -1010101}";

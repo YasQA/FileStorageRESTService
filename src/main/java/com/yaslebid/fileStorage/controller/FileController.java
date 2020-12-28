@@ -53,7 +53,10 @@ public class FileController {
             }
 
         try {
-            file.addTag(new FileTypeResolver().identifyFileType(file));
+            String fileType = new FileTypeResolver().identifyFileType(file);
+            if (!fileType.equals("unknown")) {
+                    file.addTag(new FileTypeResolver().identifyFileType(file));
+            }
             IndexCoordinates indexCoordinates = elasticsearchOperations.getIndexCoordinatesFor(file.getClass());
             IndexQuery indexQuery = new IndexQueryBuilder().withObject(file).build();
             String fileId = elasticsearchOperations.index(indexQuery, indexCoordinates);
