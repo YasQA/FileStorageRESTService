@@ -3,7 +3,6 @@ package com.yaslebid.fileStorage.controller.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,11 +12,8 @@ import static org.springframework.data.elasticsearch.annotations.FieldType.Keywo
 public class File {
     @Id
     private String id;
-
     private String name;
-
     private Long size;
-
     @Field(type = Keyword)
     private Set<String> tags = new HashSet<>();
 
@@ -54,6 +50,10 @@ public class File {
 
     public Set<String> getTags() {
         return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 
     public void addTag(String tag) {
