@@ -16,6 +16,8 @@ POST /file
    "size" : 121231     
 }
 
+(file tags for famoust file types will be added automatically, e.g 'image' to *.png, *.jpg ...)
+
 2. Delete file:
 DELETE  /file/{ID}
 
