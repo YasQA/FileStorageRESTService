@@ -1,7 +1,6 @@
 package com.yaslebid.fileStorage.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.yaslebid.fileStorage.controller.model.File;
@@ -21,8 +20,7 @@ public class FileFinderFiltered implements FileFinderParametrized {
     }
 
     public ObjectNode searchFiles(List<String> tags, String q, int size, int page) {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode objectNode = mapper.createObjectNode();
+        ObjectNode objectNode = new ObjectMapper().createObjectNode();
         String stringTags = new Gson().toJson(tags);
         Page<File> queryResult;
         Pageable pageToRespond = PageRequest.of(page, size);
@@ -45,9 +43,8 @@ public class FileFinderFiltered implements FileFinderParametrized {
 
             List<File> resultList = queryResult.getContent();
             long total = queryResult.getTotalElements();
-            ArrayNode arrayNode = mapper.valueToTree(resultList);
             objectNode.put("total", total);
-            objectNode.set("page", arrayNode);
+            objectNode.putPOJO("page", resultList);
 
         } catch (Exception exception) {
             objectNode.put("error", "exception: " + exception.getMessage());
