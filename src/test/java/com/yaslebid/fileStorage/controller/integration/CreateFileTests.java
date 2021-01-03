@@ -1,4 +1,4 @@
-package com.yaslebid.fileStorage.controller;
+package com.yaslebid.fileStorage.controller.integration;
 
 import com.yaslebid.fileStorage.TestConfigAndData.TestData;
 import com.yaslebid.fileStorage.helpers.FileIdParser;
@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
+//@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -28,13 +28,13 @@ class CreateFileTests {
     @Autowired
     private MockMvc mvc;
 
-    String newFileId;
+    private String newFileId;
 
     @BeforeAll
     public void setup() throws Exception {
         MvcResult saveResult = this.mvc.perform(post("/file")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(TestData.newFileJson))
+                .content(TestData.NEW_FILE_JSON))
                 .andReturn();
 
         String content = saveResult.getResponse().getContentAsString();
@@ -43,12 +43,12 @@ class CreateFileTests {
 
     @AfterAll
     public void teardown() throws Exception {
-        MvcResult saveResult = this.mvc.perform(delete("/file".concat(newFileId))).andReturn();
+        MvcResult saveResult = this.mvc.perform(delete("/file/{newFileId}", newFileId)).andReturn();
     }
 
     @Test
     void saveSuccessfully_and_withCorrectBasicData() throws Exception {
-        MvcResult getByIdResult = this.mvc.perform(get("/file/".concat(newFileId)))
+        MvcResult getByIdResult = this.mvc.perform(get("/file/{newFileId}", newFileId))
                 .andDo(print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(newFileId))
                 .andExpect(jsonPath("$.name").value("testFile.avi"))
@@ -58,7 +58,7 @@ class CreateFileTests {
 
     @Test
     void saveSuccessfully_and_withCorrectAutoTagData() throws Exception {
-        MvcResult getByIdResult = this.mvc.perform(get("/file/".concat(newFileId)))
+        MvcResult getByIdResult = this.mvc.perform(get("/file/{newFileId}", newFileId))
                 .andDo(print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.tags").value("video"))
                 .andReturn();

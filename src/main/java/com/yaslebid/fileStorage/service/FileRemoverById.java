@@ -3,9 +3,11 @@ package com.yaslebid.fileStorage.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yaslebid.fileStorage.repository.FilesRepository;
+import org.springframework.stereotype.Component;
 
 import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
 
+@Component
 public class FileRemoverById implements FileRemover {
 
     private final FilesRepository filesRepository;

@@ -2,11 +2,13 @@ package com.yaslebid.fileStorage.service;
 
 import com.yaslebid.fileStorage.controller.model.File;
 import com.yaslebid.fileStorage.repository.FilesRepository;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
 
+@Component
 public class FileFinderById implements FileFinderSimple {
     private final FilesRepository filesRepository;
 
