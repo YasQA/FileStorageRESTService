@@ -1,12 +1,8 @@
 package com.yaslebid.fileStorage.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yaslebid.fileStorage.TestConfigAndData.TestData;
 import com.yaslebid.fileStorage.controller.model.File;
-import com.yaslebid.fileStorage.helpers.FileTypeResolver;
 import com.yaslebid.fileStorage.helpers.TestFileOperator;
-import com.yaslebid.fileStorage.repository.FilesRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -14,13 +10,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.util.Optional;
-
-import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -74,8 +65,8 @@ class NewFileCreatorTest {
         ObjectNode responseNode = fileCreator.createFile(fakeFile);
 
         assertFalse(responseNode.get("success").asBoolean());
-        Assertions.assertEquals("wrong or empty file size, should be not less than 0"
-                , responseNode.get("error").textValue());
+        Assertions.assertEquals(
+                "wrong or empty file size, should be not less than 0", responseNode.get("error").textValue());
     }
 
 }
