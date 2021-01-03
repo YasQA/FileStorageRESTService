@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yaslebid.fileStorage.controller.model.File;
 import com.yaslebid.fileStorage.repository.FilesRepository;
+import org.springframework.stereotype.Component;
+
 import java.util.Arrays;
 import java.util.Optional;
 
 import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
 
+@Component
 public class FileTagsRemoverByFileId implements FileTagsRemover {
     private final FilesRepository filesRepository;
 

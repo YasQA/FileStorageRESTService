@@ -1,54 +1,60 @@
-package com.yaslebid.fileStorage.controller;
+package com.yaslebid.fileStorage.controller.integration;
 
-import com.yaslebid.fileStorage.TestConfigAndData.TestData;
-import com.yaslebid.fileStorage.helpers.FileIdParser;
+import com.yaslebid.fileStorage.helpers.TestFileOperator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
+//@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 class DeleteFileTests {
-
     @Autowired
     private MockMvc mvc;
+    @Autowired
+    private TestFileOperator testFileOperator;
 
-    String newFileId;
+    private String newFileId;
 
     @BeforeEach
     public void setup() throws Exception {
-        MvcResult saveResult = this.mvc.perform(post("/file")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(TestData.newFileJson))
-                .andReturn();
-
-        String content = saveResult.getResponse().getContentAsString();
-        newFileId = FileIdParser.getIdFromCreateFileResponse(content);
+        newFileId = testFileOperator.mvcCreateNewFile();
     }
 
     @Test
-    void deleteFile() throws Exception {
-        MvcResult deleteByIdResult = this.mvc.perform(delete("/file/".concat(newFileId)))
+    void deleteFile_andCheck_ifFileNotAvailableAnyMore() throws Exception {
+        MvcResult deleteByIdResult = this.mvc.perform(delete("/file/{newFileId}", newFileId))
                 .andDo(print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andReturn();
 
-        MvcResult getByIdResult = this.mvc.perform(get("/file/".concat(newFileId)))
+        MvcResult getByIdResult = this.mvc.perform(get("/file/{newFileId}", newFileId))
                 .andDo(print())
                 .andExpect(status().isNotFound())
+                .andReturn();
+    }
+
+    @Test
+    void deleteNotExistentFile() throws Exception {
+        final String uuid = UUID.randomUUID().toString();
+
+        MvcResult deleteByIdResult = this.mvc.perform(delete("/file/{uuid}", uuid))
+                .andDo(print()).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").value("file not found"))
                 .andReturn();
     }
 }

@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yaslebid.fileStorage.controller.model.File;
 import com.yaslebid.fileStorage.helpers.FileTypeResolver;
 import com.yaslebid.fileStorage.repository.FilesRepository;
+import org.springframework.stereotype.Component;
 
 import static com.yaslebid.fileStorage.FileStorageRestServiceApplication.LOGGER;
 
+@Component
 public class NewFileCreator implements FileCreator {
     private final FilesRepository filesRepository;
 
